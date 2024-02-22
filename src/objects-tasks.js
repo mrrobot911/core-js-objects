@@ -381,32 +381,94 @@ function group(array, keySelector, valueSelector) {
  */
 
 const cssSelectorBuilder = {
-  element(/* value */) {
-    throw new Error('Not implemented');
+  customError: {
+    occur:
+      'Element, id and pseudo-element should not occur more then one time inside the selector',
+    order:
+      'Selector parts should be arranged in the following order: element, id, class, attribute, pseudo-class, pseudo-element',
   },
 
-  id(/* value */) {
-    throw new Error('Not implemented');
+  selectors: {
+    element: [0, ''],
+    id: [0, ''],
+    class: [0, ''],
+    attr: [0, ''],
+    pseudoClass: [0, ''],
+    pseudoElement: [0, ''],
   },
 
-  class(/* value */) {
-    throw new Error('Not implemented');
+  element(value) {
+    this.selectors.element[0] += 1;
+    this.validateOccurrence(this.selectors.element);
+    this.selectors.element[1] = value;
+    return this;
   },
 
-  attr(/* value */) {
-    throw new Error('Not implemented');
+  id(value) {
+    this.selectors.id[0] += 1;
+    this.validateOccurrence(this.selectors.id);
+    this.selectors.id[1] = `#${value}`;
+    return this;
   },
 
-  pseudoClass(/* value */) {
-    throw new Error('Not implemented');
+  class(value) {
+    this.selectors.class[1] = this.addPart(
+      this.selectors.class[1],
+      `.${value}`
+    );
+    return this;
   },
 
-  pseudoElement(/* value */) {
-    throw new Error('Not implemented');
+  attr(value) {
+    this.selectors.attr[1] = this.addPart(this.selectors.attr[1], `[${value}]`);
+    return this;
   },
 
-  combine(/* selector1, combinator, selector2 */) {
-    throw new Error('Not implemented');
+  pseudoClass(value) {
+    this.selectors.pseudoClass[1] = this.addPart(
+      this.selectors.pseudoClass[1],
+      `:${value}`
+    );
+    return this;
+  },
+
+  pseudoElement(value) {
+    this.selectors.pseudoElement[0] += 1;
+    this.validateOccurrence(this.selectors.pseudoElement);
+    this.selectors.pseudoElement[1] = `::${value}`;
+    return this;
+  },
+
+  combine(selector1, combinator, selector2) {
+    const sel1 = selector1.stringify();
+    const sel2 = selector2.stringify();
+    console.log(sel1, sel2);
+    return {
+      stringify() {
+        return `${sel1} ${combinator} ${sel2}`;
+      },
+    };
+  },
+
+  stringify() {
+    let answ = '';
+    Object.values(this.selectors).forEach((el) => {
+      answ += el[1];
+    });
+    Object.keys(this.selectors).forEach((key) => {
+      this.selectors[key] = [0, ''];
+    });
+    return answ;
+  },
+
+  addPart(existingPart, newPart) {
+    return existingPart ? `${existingPart}${newPart}` : newPart;
+  },
+
+  validateOccurrence(currentValue) {
+    if (currentValue[0] > 1) {
+      throw new Error(this.customError.occur);
+    }
   },
 };
 
