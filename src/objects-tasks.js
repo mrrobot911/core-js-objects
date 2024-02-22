@@ -389,60 +389,61 @@ const cssSelectorBuilder = {
   },
 
   selectors: {
-    element: [0, ''],
-    id: [0, ''],
-    class: [0, ''],
-    attr: [0, ''],
-    pseudoClass: [0, ''],
-    pseudoElement: [0, ''],
+    element: '',
+    id: '',
+    class: '',
+    attr: '',
+    pseudoClass: '',
+    pseudoElement: '',
+  },
+  occurance: {
+    div: 0,
+    id: 0,
+    pseudoElement: 0,
   },
 
   element(value) {
-    this.selectors.element[0] += 1;
-    this.validateOccurrence(this.selectors.element);
-    this.selectors.element[1] = value;
+    this.validateOccurrence(this.occurance.div);
+    this.occurance.div += 1;
+    this.selectors.element = value;
     return this;
   },
 
   id(value) {
-    this.selectors.id[0] += 1;
-    this.validateOccurrence(this.selectors.id);
-    this.selectors.id[1] = `#${value}`;
+    this.validateOccurrence(this.occurance.id);
+    this.occurance.id += 1;
+    this.selectors.id = `#${value}`;
     return this;
   },
 
   class(value) {
-    this.selectors.class[1] = this.addPart(
-      this.selectors.class[1],
-      `.${value}`
-    );
+    this.selectors.class = this.addPart(this.selectors.class, `.${value}`);
     return this;
   },
 
   attr(value) {
-    this.selectors.attr[1] = this.addPart(this.selectors.attr[1], `[${value}]`);
+    this.selectors.attr = this.addPart(this.selectors.attr, `[${value}]`);
     return this;
   },
 
   pseudoClass(value) {
-    this.selectors.pseudoClass[1] = this.addPart(
-      this.selectors.pseudoClass[1],
+    this.selectors.pseudoClass = this.addPart(
+      this.selectors.pseudoClass,
       `:${value}`
     );
     return this;
   },
 
   pseudoElement(value) {
-    this.selectors.pseudoElement[0] += 1;
-    this.validateOccurrence(this.selectors.pseudoElement);
-    this.selectors.pseudoElement[1] = `::${value}`;
+    this.validateOccurrence(this.occurance.pseudoElement);
+    this.occurance.pseudoElement += 1;
+    this.selectors.pseudoElement = `::${value}`;
     return this;
   },
 
   combine(selector1, combinator, selector2) {
     const sel1 = selector1.stringify();
     const sel2 = selector2.stringify();
-    console.log(sel1, sel2);
     return {
       stringify() {
         return `${sel1} ${combinator} ${sel2}`;
@@ -453,10 +454,13 @@ const cssSelectorBuilder = {
   stringify() {
     let answ = '';
     Object.values(this.selectors).forEach((el) => {
-      answ += el[1];
+      answ += el;
     });
     Object.keys(this.selectors).forEach((key) => {
-      this.selectors[key] = [0, ''];
+      this.selectors[key] = '';
+    });
+    Object.keys(this.occurance).forEach((key) => {
+      this.occurance[key] = 0;
     });
     return answ;
   },
@@ -466,7 +470,7 @@ const cssSelectorBuilder = {
   },
 
   validateOccurrence(currentValue) {
-    if (currentValue[0] > 1) {
+    if (currentValue > 1) {
       throw new Error(this.customError.occur);
     }
   },
