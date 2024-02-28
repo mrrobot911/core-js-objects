@@ -380,99 +380,103 @@ function group(array, keySelector, valueSelector) {
  *  For more examples see unit tests.
  */
 
-const cssSelectorBuilder = {
-  customError: {
-    occur:
-      'Element, id and pseudo-element should not occur more then one time inside the selector',
-    order:
-      'Selector parts should be arranged in the following order: element, id, class, attribute, pseudo-class, pseudo-element',
-  },
-
-  selectors: {
-    element: '',
-    id: '',
-    class: '',
-    attr: '',
-    pseudoClass: '',
-    pseudoElement: '',
-  },
-  occurance: {
-    div: 0,
-    id: 0,
-    pseudoElement: 0,
-  },
+class Selector {
+  constructor() {
+    this.result = '';
+    this.customError = {
+      occur:
+        'Element, id and pseudo-element should not occur more then one time inside the selector',
+      order:
+        'Selector parts should be arranged in the following order: element, id, class, attribute, pseudo-class, pseudo-element',
+    };
+    this.occurrence = {
+      div: 0,
+      id: 0,
+      pseudoElement: 0,
+    };
+    this.order = 0;
+  }
 
   element(value) {
-    this.validateOccurrence(this.occurance.div);
-    this.occurance.div += 1;
-    this.selectors.element = value;
-    return this;
-  },
+    return this.updateSelector(value, 1, 'div');
+  }
 
   id(value) {
-    this.validateOccurrence(this.occurance.id);
-    this.occurance.id += 1;
-    this.selectors.id = `#${value}`;
-    return this;
-  },
+    return this.updateSelector(`#${value}`, 2, 'id');
+  }
 
   class(value) {
-    this.selectors.class = this.addPart(this.selectors.class, `.${value}`);
-    return this;
-  },
+    return this.updateSelector(`.${value}`, 3);
+  }
 
   attr(value) {
-    this.selectors.attr = this.addPart(this.selectors.attr, `[${value}]`);
-    return this;
-  },
+    return this.updateSelector(`[${value}]`, 4);
+  }
 
   pseudoClass(value) {
-    this.selectors.pseudoClass = this.addPart(
-      this.selectors.pseudoClass,
-      `:${value}`
-    );
-    return this;
-  },
+    return this.updateSelector(`:${value}`, 5);
+  }
 
   pseudoElement(value) {
-    this.validateOccurrence(this.occurance.pseudoElement);
-    this.occurance.pseudoElement += 1;
-    this.selectors.pseudoElement = `::${value}`;
-    return this;
-  },
+    return this.updateSelector(`::${value}`, 6, 'pseudoElement');
+  }
 
   combine(selector1, combinator, selector2) {
     const sel1 = selector1.stringify();
     const sel2 = selector2.stringify();
-    return {
-      stringify() {
-        return `${sel1} ${combinator} ${sel2}`;
-      },
-    };
-  },
+    this.result = `${sel1} ${combinator} ${sel2}`;
+    return this;
+  }
 
   stringify() {
-    let answ = '';
-    Object.values(this.selectors).forEach((el) => {
-      answ += el;
-    });
-    Object.keys(this.selectors).forEach((key) => {
-      this.selectors[key] = '';
-    });
-    Object.keys(this.occurance).forEach((key) => {
-      this.occurance[key] = 0;
-    });
-    return answ;
-  },
+    return this.result;
+  }
 
-  addPart(existingPart, newPart) {
-    return existingPart ? `${existingPart}${newPart}` : newPart;
-  },
+  updateSelector(value, order, occurrenceKey) {
+    if (this.order > order) {
+      throw new Error(this.customError.order);
+    }
+    this.occurrence[occurrenceKey] += 1;
+    this.validateOccurrence(this.occurrence[occurrenceKey]);
+    this.result += value;
+    this.order = order;
+    return this;
+  }
 
   validateOccurrence(currentValue) {
     if (currentValue > 1) {
       throw new Error(this.customError.occur);
     }
+  }
+}
+
+const cssSelectorBuilder = {
+  element(value) {
+    return new Selector().element(value);
+  },
+
+  id(value) {
+    return new Selector().id(value);
+  },
+
+  class(value) {
+    return new Selector().class(value);
+  },
+
+  attr(value) {
+    return new Selector().attr(value);
+  },
+
+  pseudoClass(value) {
+    return new Selector().pseudoClass(value);
+  },
+
+  pseudoElement(value) {
+    return new Selector().pseudoElement(value);
+  },
+
+  combine(selector1, combinator, selector2) {
+    return new Selector().combine(selector1, combinator, selector2);
   },
 };
 
